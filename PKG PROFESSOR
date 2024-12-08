@@ -1,0 +1,58 @@
+CREATE OR REPLACE PACKAGE PKG_PROFESSOR AS
+
+  -- Cursor para total de turmas por professor
+  CURSOR CURSOR_TURMAS_POR_PROFESSOR;
+
+  -- Function para total de turmas de um professor
+  FUNCTION TOTAL_TURMAS_PROFESSOR(p_id_professor IN NUMBER) RETURN NUMBER;
+
+  -- Function para professor de uma disciplina
+  FUNCTION PROFESSOR_DA_DISCIPLINA(p_id_disciplina IN NUMBER) RETURN VARCHAR2;
+
+END PKG_PROFESSOR;
+/
+
+CREATE OR REPLACE PACKAGE BODY PKG_PROFESSOR AS
+
+  -- Cursor para total de turmas por professor
+  CURSOR CURSOR_TURMAS_POR_PROFESSOR IS
+    SELECT P.NOME AS NOME_PROFESSOR, COUNT(T.ID_TURMA) AS TOTAL_TURMAS
+    FROM PROFESSOR P
+    JOIN TURMA T ON P.ID_PROFESSOR = T.ID_PROFESSOR
+    GROUP BY P.NOME
+    HAVING COUNT(T.ID_TURMA) > 1;
+
+  -- Function para total de turmas de um professor
+  FUNCTION TOTAL_TURMAS_PROFESSOR(p_id_professor IN NUMBER) RETURN NUMBER IS
+    v_total NUMBER;
+  BEGIN
+    SELECT COUNT(*)
+    INTO v_total
+    FROM TURMA
+    WHERE ID_PROFESSOR = p_id_professor;
+
+    RETURN v_total;
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+      RETURN 0;
+  END TOTAL_TURMAS_PROFESSOR;
+
+  -- Function para professor de uma disciplina
+  FUNCTION PROFESSOR_DA_DISCIPLINA(p_id_disciplina IN NUMBER) RETURN VARCHAR2 IS
+    v_nome_professor VARCHAR2(100);
+  BEGIN
+    SELECT P.NOME
+    INTO v_nome_professor
+    FROM PROFESSOR P
+    JOIN TURMA T ON P.ID_PROFESSOR = T.ID_PROFESSOR
+    WHERE T.ID_DISCIPLINA = p_id_disciplina
+    AND ROWNUM = 1; -- Caso haja mais de um professor, retorna o primeiro
+
+    RETURN v_nome_professor;
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+      RETURN NULL;
+  END PROFESSOR_DA_DISCIPLINA;
+
+END PKG_PROFESSOR;
+/
